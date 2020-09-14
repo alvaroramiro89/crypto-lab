@@ -1,3 +1,15 @@
+# Crypto-Lab
+
+Test project for creating a coin, wallet & exchange apps, based on truffle, solidity and react.
+
+1) Run `npm install`, this will install the dependencies on package.json
+2) Other useful commands:
+    * truffle migrate
+    * truffle console
+    * truffle test to run the tests under ./test folder
+3) To start the react app, run `npm start`
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
