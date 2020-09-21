@@ -1,25 +1,21 @@
 const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
-const { contracts_build_directory } = require("../truffle-config");
-const { iteratee } = require("lodash");
-
 const Token = artifacts.require("./Token");
-
 chai.use(chaiAsPromised).should();
+import {tokens, EVM_REVERT} from "./helpers";
 
-contract("Token", (account) => {
+contract("Token", ([deployer, receiver]) => {
 
     let token;
     const symbol = "QTKN";
     const decimals = "18";
-    const totalSupply = "1000000000000000000000000";
+    const totalSupply = tokens(1000000).toString();
 
 
     beforeEach(async () => {
         token = await Token.new();
     })
 
-    
     describe("deployment", () => {
         it("Should have name QTOKEN", async () => {
             const result = await token.name();
@@ -35,7 +31,56 @@ contract("Token", (account) => {
         });
         it("tracks the total supply", async () => {
             const result = await token.totalSupply();
-            result.toString().should.equal(totalSupply);
+            result.toString().should.equal(totalSupply.toString());
+        });
+        it("assigns total supply to deployer", async () => {
+            const result = await token.balanceOf(deployer);
+            result.toString().should.equal(totalSupply.toString());
         });
     });
+
+
+    describe("sending tokens", () => {
+        let amount;
+        let result;
+
+        describe("success", async () => {
+            beforeEach(async () => {
+                amount = tokens(100);
+                result = await token.transfer(receiver, amount, {from: deployer});
+            })
+    
+            it("should transfer token", async () => {
+                let balanceOf;
+                balanceOf = await token.balanceOf(deployer);
+                balanceOf.toString().should.equal(tokens(999900).toString());
+                
+                balanceOf = await token.balanceOf(receiver);
+                balanceOf.toString().should.equal(tokens(100).toString());
+            });
+    
+            it("emits transfer event", async () => {
+                const log = result.logs[0];
+                log.event.should.equal("Transfer");
+                const transferArgs = log.args;
+                transferArgs.from.toString().should.equal(deployer.toString(), "from is OK");
+                transferArgs.to.toString().should.equal(receiver.toString(), "to is OK"); 
+                transferArgs.value.toString().should.equal(amount.toString(), "value is OK");
+            });
+        });
+
+        describe("failure", async () => {
+            it("rejects invalid amount", async () => {
+                let invalidAmount = tokens(100000000);
+                await token.transfer(receiver, invalidAmount, {from: deployer}).should.be.rejectedWith(EVM_REVERT);
+
+                invalidAmount = tokens(10)
+                await token.transfer(deployer, invalidAmount, {from: receiver}).should.be.rejectedWith(EVM_REVERT);
+            });
+
+            it("rejects invalid receiver", async () => {
+                await token.transfer(0x0, amount, {from: deployer}).should.be.rejected;
+            });
+        });
+    })
 });
