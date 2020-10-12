@@ -9,10 +9,10 @@ import "../../node_modules/@openzeppelin/contracts/math/SafeMath.sol";
 // Handle trades & fees
 
 // TODO:
-// [] Set fee account
-// [] Deposit ether
+// [X] Set fee account
+// [X] Deposit ether
 // [] Withdraw ether
-// [] Deposit token
+// [X] Deposit token
 // [] Withdraw token
 // [] Check balances
 // [] Make orders
