@@ -5,7 +5,7 @@ chai.use(chaiAsPromised).should();
 const Exchange = artifacts.require("./Exchange");
 const Token = artifacts.require("./Token");
 
-contract("Exchange", ([deployer, feeAccount, account1]) => {
+contract("Exchange", ([deployer, feeAccount, account1, account2]) => {
 
     let exchange;
     let token;
@@ -192,6 +192,89 @@ contract("Exchange", ([deployer, feeAccount, account1]) => {
             it("returns user's balance", async () => {
                 result = await exchange.tokens(ETHER_ADDRESS, account1);
                 result.toString().should.equal(ether(1).toString());
+            });
+        });
+
+        describe("making orders", async () => {
+            let result;
+
+            beforeEach(async () => {
+                result = await exchange.makeOrder(token.address, tokens(1), ETHER_ADDRESS, ether(1), { from: account1 });
+            });
+
+            it("tracks the newly created order", async () => {
+                const orderCount = await exchange.orderCount();
+                orderCount.toString().should.equals('1');
+                const order = await exchange.orders('1');
+                order.id.toString().should.equal('1', "id is correct");
+                order.user.should.equal(account1, "user is tracked");
+                order.tokenGet.should.equal(token.address, "token is correct");
+                order.amountGet.toString().should.equal(tokens(1).toString(), "amount is correct");
+                order.tokenGive.should.equal(ETHER_ADDRESS, "token to give is OK");
+                order.amountGive.toString().should.equal(ether(1).toString(), "amount to give is OK");
+                order.timestamp.toString().length.should.be.at.least(1, "timestamp is present");
+            });
+
+            it( "emits an Order event", async () => {
+                const log = result.logs[0];
+                log.event.should.eq('Order', "emited event is OK");
+                const event = log.args;
+                event.id.toString().should.equal('1', "id is correct");
+                event.user.should.equal(account1, "user is tracked");
+                event.tokenGet.should.equal(token.address, "token is correct");
+                event.amountGet.toString().should.equal(tokens(1).toString(), "amount is correct");
+                event.tokenGive.should.equal(ETHER_ADDRESS, "token to give is OK");
+                event.amountGive.toString().should.equal(ether(1).toString(), "amount to give is OK");
+                event.timestamp.toString().length.should.be.at.least(1, "timestamp is present");
+            });
+        });
+
+        describe("order actions", async () => {
+            let result;
+
+            beforeEach(async () => {
+                await exchange.depositEther({from: account1, value: ether(1)});
+                result = await exchange.makeOrder(token.address, tokens(1), ETHER_ADDRESS, ether(1), { from: account1 });
+            });
+
+            describe("cancelling orders", async () => {
+                let result;
+
+                describe("success", async () => {
+                    beforeEach(async () => {
+                        result = await exchange.cancelOrder('1', {from: account1});
+                    });
+        
+                    it("tracks the cancelled order", async () => {
+                        const isCancelled = await exchange.ordersCancelled(1);
+                        isCancelled.should.equal(true);
+                    });
+
+                    it( "emits a Cancel event", async () => {
+                        const log = result.logs[0];
+                        log.event.should.eq('Cancel', "emited event is OK");
+                        const event = log.args;
+                        event.id.toString().should.equal('1', "id is correct");
+                        event.user.should.equal(account1, "user is tracked");
+                        event.tokenGet.should.equal(token.address, "token is correct");
+                        event.amountGet.toString().should.equal(tokens(1).toString(), "amount is correct");
+                        event.tokenGive.should.equal(ETHER_ADDRESS, "token to give is OK");
+                        event.amountGive.toString().should.equal(ether(1).toString(), "amount to give is OK");
+                        event.timestamp.toString().length.should.be.at.least(1, "timestamp is present");
+                    });
+                });
+
+                describe("failure", async () => {
+
+                    it("rejects invalid order id ", async () => {
+                        const invalidOrderId = 99999;
+                        await exchange.cancelOrder(invalidOrderId, {from: account1}).should.be.rejectedWith(EVM_REVERT);
+                    });
+
+                    it("rejects unauthorized cancelations ", async () => {
+                        await exchange.cancelOrder("1", {from: account2}).should.be.rejectedWith(EVM_REVERT);
+                    });
+                });
             });
         });
     });
