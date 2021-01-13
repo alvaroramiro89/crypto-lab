@@ -28,7 +28,7 @@
     "redux": "^4.0.5",
     "redux-logger": "^3.0.6",
     "reselect": "^4.0.0",
-    "solidity-coverage": "^0.7.10",
+    "solidity-coverage": "^0.7.13",
     "truffle": "^5.1.44",
     "truffle-flattener": "^1.5.0",
     "truffle-hdwallet-provider": "^1.0.17",
