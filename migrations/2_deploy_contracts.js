@@ -1,16 +1,22 @@
 const { default: Web3 } = require("web3");
+const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 
 const Token = artifacts.require("Token");
-const Exchange = artifacts.require("Exchange");
+const TokenV2 = artifacts.require("TokenV2");
+//const Exchange = artifacts.require("Exchange");
 
 module.exports = async function (deployer) {
 
-  const accounts = await web3.eth.getAccounts()
-  await deployer.deploy(Token);
+  const instance = await deployProxy(Token, ["QTOKEN"], { deployer });
+  await upgradeProxy(instance.address, TokenV2, { deployer });
 
-  const feeAccount = accounts[0];
+  // await deployer.deploy(Exchange, feeAccount, feePercent);
 
-  const feePercent = 10;
+  // const accounts = await web3.eth.getAccounts()
+
+  // const feeAccount = accounts[0];
+
+  // const feePercent = 10;
   
-  await deployer.deploy(Exchange, feeAccount, feePercent);
+  // await deployer.deploy(Exchange, feeAccount, feePercent);
 };
