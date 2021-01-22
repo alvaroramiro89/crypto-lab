@@ -3,7 +3,7 @@ pragma solidity ^0.6.0;
 import "../../node_modules/@openzeppelin/contracts/math/SafeMath.sol";
 //import "@openzeppelin/contracts/proxy/Initializable.sol";
 
-contract Token {
+contract TokenV2 {
 
     using SafeMath for uint;
 
@@ -57,6 +57,16 @@ contract Token {
         allowance[_from][msg.sender] = allowance[_from][msg.sender].sub(_value);
         _transfer(_from, _to, _value);
         return true;
+    }
+
+    string private cageboy;
+
+    function setCageboy(string memory _cageboy) public {
+        cageboy = _cageboy;
+    }
+
+    function retrieveCageboy() public view returns (string memory){
+        return cageboy;
     }
 }
 

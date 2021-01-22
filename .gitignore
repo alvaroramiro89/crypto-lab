@@ -8,6 +8,9 @@
 # testing
 /coverage
 
+#openzeppelin
+.openzeppelin
+
 # production
 /build
 

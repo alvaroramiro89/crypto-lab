@@ -2,18 +2,39 @@ import { tokens, EVM_REVERT } from "./helpers";
 const chai = require("chai");
 const chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised).should();
+const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
 const Token = artifacts.require("./Token");
+const TokenV2 = artifacts.require("./TokenV2");
+
+describe("upgradeability", () => {
+    it('works before and after upgrading', async function () {
+        let result;
+        let v2;
+
+        const instance = await deployProxy(Token, ["QTOKEN"]);
+        result = await instance.name();
+        result.should.equal("QTOKEN");
+        // (await instance.retrieve()).toString().should.equal("100")
+      
+        v2 = await upgradeProxy(instance.address, TokenV2);
+        await v2.setCageboy("ALVARO");
+        (await v2.retrieveCageboy()).should.equal("ALVARO");
+        (await v2.name()).should.equal("QTOKEN");
+
+    });
+});
 
 contract("Token", ([deployer, receiver, exchange]) => {
 
     let token;
+    const name = "QTOKEN";
     const symbol = "QTKN";
     const decimals = "18";
     const totalSupply = tokens(1000000).toString();
 
-
     beforeEach(async () => {
         token = await Token.new();
+        token.initialize(name);
     })
 
     describe("deployment", () => {
